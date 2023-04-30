@@ -1,0 +1,2 @@
+# AudioLink Server
+The server library for the AudioLink system. To create a server simply extend the `AudioLinkServer` class and instantiate it. For customization, you can override the methods `configureSourceManagers`, `customAudioCommands` and `setupHttpServer`.
