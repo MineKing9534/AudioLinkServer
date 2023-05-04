@@ -9,8 +9,10 @@ public class CurrentTrackCommand extends Command {
 	@Override
 	public void performCommand(Context context) {
 		context.connection.sendData(MessageType.TRACK_INFO, out -> {
-			if(context.connection.getPlayer().getPlayingTrack() != null) {
-				out.write(new CurrentTrackData(context.connection.getPlayer().getPlayingTrack()).getData());
+			var player = context.getPlayer();
+
+			if(player.getPlayingTrack() != null) {
+				out.write(new CurrentTrackData(player.getPlayingTrack()).getData());
 			}
 		});
 	}

@@ -10,6 +10,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +22,8 @@ public class AudioConnection {
 	private final WsContext context;
 	private Future<?> stream;
 
-	private final AudioPlayer player;
+	private final AudioPlayer player1;
+	private final AudioPlayer player2;
 
 	private long bufferDifference = 0;
 
@@ -28,9 +31,14 @@ public class AudioConnection {
 		this.main = main;
 		this.context = context;
 
-		player = main.manager.manager.createPlayer();
+		player1 = main.manager.manager.createPlayer();
+		player2 = main.manager.manager.createPlayer();
 
-		player.addListener(new EventListener(this));
+		player1.setVolume(10);
+		player2.setVolume(10);
+
+		player1.addListener(new EventListener(this, (byte) 0));
+		player2.addListener(new EventListener(this, (byte) 1));
 
 		for(long i = 0; i < buffer; i++) {
 			sendAudioData();
@@ -61,16 +69,58 @@ public class AudioConnection {
 	}
 
 	private void sendAudioData() {
-		var frame = player.provide();
+		var frame1 = player1.provide();
+		var frame2 = player2.provide();
 
-		if(frame != null) {
-			sendData(MessageType.AUDIO, out -> out.write(frame.getData()));
+		var data1 = frame1 != null ? frame1.getData() : new byte[0];
+		var data2 = frame2 != null ? frame2.getData() : new byte[0];
+
+		var pcm1 = new short[data1.length / 2];
+		var pcm2 = new short[data2.length / 2];
+
+		ByteBuffer.wrap(data1).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm1);
+		ByteBuffer.wrap(data2).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm2);
+
+		var mixed = mixPcmData(pcm1, pcm2);
+		var buffer = ByteBuffer.allocate(mixed.length * 2);
+
+		for(var s : mixed) {
+			buffer.putShort(s);
 		}
 
-		else {
-			sendData(MessageType.AUDIO, out -> {});
-		}
+		sendData(MessageType.AUDIO, out -> out.write(buffer.array()));
 	}
+
+	private static short[] mixPcmData(short[] pcm1, short[] pcm2) {
+		int length = Math.min(pcm1.length, pcm2.length);
+		short[] mixedPcm = new short[length];
+
+		for(int i = 0; i < length; i++) {
+			mixedPcm[i] = (short) ((pcm1[i] + pcm2[i]) / 2);
+		}
+
+		if(pcm1.length > length) {
+			mixedPcm = Arrays.copyOf(mixedPcm, pcm1.length);
+			System.arraycopy(pcm1, length, mixedPcm, length, pcm1.length - length);
+		}
+
+		else if(pcm2.length > length) {
+			mixedPcm = Arrays.copyOf(mixedPcm, pcm2.length);
+			System.arraycopy(pcm2, length, mixedPcm, length, pcm2.length - length);
+		}
+
+		return mixedPcm;
+	}
+
+	/*private void sendAudioData() {
+		sendData(MessageType.AUDIO, out -> out.write(
+				Optional.ofNullable(
+						player2.getPlayingTrack() != null
+								? player2.provide()
+								: player1.provide()
+				).map(AudioFrame::getData).orElseGet(() -> new byte[0])
+		));
+	}*/
 
 	public synchronized void sendData(MessageType type, DataCreator creator) {
 		try {
@@ -86,15 +136,20 @@ public class AudioConnection {
 		}
 	}
 
-	public synchronized void sendEvent(EventType type, DataCreator creator) {
+	public synchronized void sendEvent(EventType type, byte id, DataCreator creator) {
 		sendData(MessageType.EVENT, out -> {
 			out.writeByte(type.id);
+			out.writeByte(id);
 			creator.createData(out);
 		});
 	}
 
-	public AudioPlayer getPlayer() {
-		return player;
+	public AudioPlayer getPlayer1() {
+		return player1;
+	}
+
+	public AudioPlayer getPlayer2() {
+		return player2;
 	}
 
 	public void disconnect() {
@@ -104,9 +159,10 @@ public class AudioConnection {
 
 		shutdown = true;
 
+		context.closeSession();
 
 		AudioLinkServer.log.info("Client disconnect");
-		player.destroy();
+		player1.destroy();
 
 		if(stream != null) {
 			stream.cancel(true);

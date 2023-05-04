@@ -47,6 +47,7 @@ public class AudioServer implements Consumer<WsConfig> {
 
 				connections.put(context, new AudioConnection(main, context, client.buffer));
 			} catch(Exception e) {
+				AudioLinkServer.log.error("Error handling new connection", e);
 				context.closeSession();
 			}
 		});

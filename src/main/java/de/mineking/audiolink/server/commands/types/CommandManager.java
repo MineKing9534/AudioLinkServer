@@ -1,5 +1,6 @@
 package de.mineking.audiolink.server.commands.types;
 
+import com.google.gson.JsonParser;
 import de.mineking.audiolink.server.commands.*;
 import de.mineking.audiolink.server.main.AudioLinkServer;
 import de.mineking.audiolink.server.processing.AudioConnection;
@@ -28,12 +29,12 @@ public class CommandManager {
 	}
 
 	public void handleCommand(AudioConnection connection, String input) {
-		var data = AudioLinkServer.gson.fromJson(input, CommandData.class);
+		var data = JsonParser.parseString(input).getAsJsonObject();
 
 		try {
-			commands.get(data.command).performCommand(new Context(main, connection, data.args));
+			commands.get(data.get("command").getAsString()).performCommand(new Context(main, connection, data.get("args").getAsJsonObject()));
 		} catch(Exception e) {
-			AudioLinkServer.log.error("Error performing command '" + data.command + "'", e);
+			AudioLinkServer.log.error("Error performing command '" + data.get("command").getAsString() + "'", e);
 		}
 	}
 }
