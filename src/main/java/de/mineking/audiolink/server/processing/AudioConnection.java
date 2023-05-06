@@ -27,7 +27,7 @@ public class AudioConnection {
 
 	private long bufferDifference = 0;
 
-	public AudioConnection(AudioLinkServer<?> main, WsContext context, long buffer) {
+	public AudioConnection(AudioLinkServer<?> main, WsContext context) {
 		this.main = main;
 		this.context = context;
 
@@ -39,10 +39,6 @@ public class AudioConnection {
 
 		player1.addListener(new EventListener(this, (byte) 0));
 		player2.addListener(new EventListener(this, (byte) 1));
-
-		for(long i = 0; i < buffer; i++) {
-			sendAudioData();
-		}
 	}
 
 	public void updateBufferDifference(long difference) {
@@ -111,16 +107,6 @@ public class AudioConnection {
 
 		return mixedPcm;
 	}
-
-	/*private void sendAudioData() {
-		sendData(MessageType.AUDIO, out -> out.write(
-				Optional.ofNullable(
-						player2.getPlayingTrack() != null
-								? player2.provide()
-								: player1.provide()
-				).map(AudioFrame::getData).orElseGet(() -> new byte[0])
-		));
-	}*/
 
 	public synchronized void sendData(MessageType type, DataCreator creator) {
 		try {
