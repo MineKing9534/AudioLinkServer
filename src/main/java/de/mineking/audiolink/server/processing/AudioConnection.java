@@ -17,9 +17,10 @@ import java.util.concurrent.TimeUnit;
 
 public class AudioConnection {
 	private final AudioLinkServer<?> main;
+	private final WsContext context;
+	private final AudioServer.ClientConfiguration config;
 
 	private boolean shutdown = false;
-	private final WsContext context;
 	private Future<?> stream;
 
 	private final AudioPlayer player1;
@@ -27,9 +28,10 @@ public class AudioConnection {
 
 	private long bufferDifference = 0;
 
-	public AudioConnection(AudioLinkServer<?> main, WsContext context) {
+	public AudioConnection(AudioLinkServer<?> main, WsContext context, AudioServer.ClientConfiguration config) {
 		this.main = main;
 		this.context = context;
+		this.config = config;
 
 		player1 = main.manager.manager.createPlayer();
 		player2 = main.manager.manager.createPlayer();
@@ -147,7 +149,7 @@ public class AudioConnection {
 
 		context.closeSession();
 
-		AudioLinkServer.log.info("Client disconnect");
+		AudioLinkServer.log.info("Client disconnect; Client Info: " + config.clientInfo());
 		player1.destroy();
 
 		if(stream != null) {

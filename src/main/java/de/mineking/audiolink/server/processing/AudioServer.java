@@ -21,7 +21,7 @@ public class AudioServer implements Consumer<WsConfig> {
 		this.main = main;
 	}
 
-	public record ClientConfiguration(String password, long buffer) {
+	public record ClientConfiguration(String password, String clientInfo) {
 	}
 
 	@Override
@@ -43,9 +43,9 @@ public class AudioServer implements Consumer<WsConfig> {
 					return;
 				}
 
-				AudioLinkServer.log.info("New Connection");
+				AudioLinkServer.log.info("New Connection; Client Info: " + client.clientInfo);
 
-				connections.put(context, new AudioConnection(main, context));
+				connections.put(context, new AudioConnection(main, context, client));
 			} catch(Exception e) {
 				AudioLinkServer.log.error("Error handling new connection", e);
 				context.closeSession();
