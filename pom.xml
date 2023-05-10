@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.github.Walkyst</groupId>
             <artifactId>lavaplayer-fork</artifactId>
-            <version>ef07585</version>
+            <version>ef075855da</version>
         </dependency>
 
         <dependency>
