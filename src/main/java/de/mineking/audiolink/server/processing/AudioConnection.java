@@ -47,6 +47,9 @@ public class AudioConnection {
 		this.bufferDifference = difference;
 	}
 
+	/**
+	 * Start the audio data stream
+	 */
 	public void startStream() {
 		if(stream != null) {
 			return;
@@ -66,6 +69,9 @@ public class AudioConnection {
 		}, 0, 20, TimeUnit.MILLISECONDS);
 	}
 
+	/**
+	 * Gets the audio data of both layers and combine them. The data are sent to the client afterward.
+	 */
 	private void sendAudioData() {
 		var frame1 = player1.provide();
 		var frame2 = player2.provide();
@@ -110,6 +116,11 @@ public class AudioConnection {
 		return mixedPcm;
 	}
 
+	/**
+	 * Send any type of data to the client
+	 * @param type the {@link MessageType} of this message
+	 * @param creator a {@link DataCreator} to write the actual data of this message
+	 */
 	public synchronized void sendData(MessageType type, DataCreator creator) {
 		try {
 			var baos = new ByteArrayOutputStream();
@@ -124,6 +135,12 @@ public class AudioConnection {
 		}
 	}
 
+	/**
+	 * Send an event to the client
+	 * @param type the {@link EventType}
+	 * @param id the id of the player, either 0 or 1
+	 * @param creator a {@link DataCreator} to write additional event parameters
+	 */
 	public synchronized void sendEvent(EventType type, byte id, DataCreator creator) {
 		sendData(MessageType.EVENT, out -> {
 			out.writeByte(type.id);
@@ -132,14 +149,23 @@ public class AudioConnection {
 		});
 	}
 
+	/**
+	 * @return The first player layer. This is the primary {@link AudioPlayer} used for playing most of the tracks
+	 */
 	public AudioPlayer getPlayer1() {
 		return player1;
 	}
 
+	/**
+	 * @return The second player layer. This is a second {@link AudioPlayer} whose data will be overlayed on top of the primary layer.
+	 */
 	public AudioPlayer getPlayer2() {
 		return player2;
 	}
 
+	/**
+	 * Disconnect the client
+	 */
 	public void disconnect() {
 		if(shutdown) {
 			return;
