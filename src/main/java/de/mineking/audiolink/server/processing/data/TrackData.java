@@ -29,6 +29,11 @@ public class TrackData {
 		this.isrc = track.isrc;
 	}
 
+	/**
+	 * Write the data of this track to a {@link DataOutputStream}.
+	 * @param out the target {@link DataOutputStream}
+	 * @throws IOException if something went wrong
+	 */
 	public void write(DataOutputStream out) throws IOException {
 		out.writeUTF(url);
 		out.writeUTF(title);
@@ -40,6 +45,10 @@ public class TrackData {
 		out.writeUTF(isrc != null ? isrc : "");
 	}
 
+	/**
+	 * @return a byte array of the track data
+	 * @throws IOException if something went wrong
+	 */
 	public byte[] getData() throws IOException {
 		var baos = new ByteArrayOutputStream();
 		var temp = new DataOutputStream(baos);
