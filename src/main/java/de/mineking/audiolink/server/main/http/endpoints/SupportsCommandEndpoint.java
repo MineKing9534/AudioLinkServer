@@ -5,10 +5,6 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-
 public class SupportsCommandEndpoint implements Handler {
 	private final AudioLinkServer<?> main;
 
@@ -16,13 +12,10 @@ public class SupportsCommandEndpoint implements Handler {
 		this.main = main;
 	}
 
+	public record Response(boolean supports) {}
+
 	@Override
-	public void handle(@NotNull Context ctx) throws Exception {
-		var array = new ByteArrayOutputStream();
-		var stream = new DataOutputStream(array);
-
-		stream.writeBoolean(main.commandManager.hasCommand(ctx.queryParam("command")));
-
-		ctx.result(new ByteArrayInputStream(array.toByteArray()));
+	public void handle(@NotNull Context ctx) {
+		ctx.json(new Response(main.commandManager.hasCommand(ctx.queryParam("command"))));
 	}
 }

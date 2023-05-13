@@ -12,8 +12,10 @@ public class ConnectionEndpoint implements Handler {
 		this.main = main;
 	}
 
+	public record Response(int count) { }
+
 	@Override
 	public void handle(@NotNull Context context) {
-		context.result(String.valueOf(main.audioServer.connections.size()));
+		context.json(new Response(main.audioServer.connections.size()));
 	}
 }
