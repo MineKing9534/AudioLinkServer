@@ -7,6 +7,7 @@ import de.mineking.audiolink.server.main.http.endpoints.TrackSearchEndpoint;
 import io.javalin.Javalin;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.json.JsonMapper;
+import io.javalin.plugin.bundled.CorsPluginConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -19,21 +20,23 @@ public class HttpServer {
 	public HttpServer(AudioLinkServer<?> main) {
 		this.main = main;
 
-		server = Javalin.create(config ->
-				config.jsonMapper(new JsonMapper() {
-					@NotNull
-					@Override
-					public <T> T fromJsonString(@NotNull String json, @NotNull Type targetType) {
-						return AudioLinkServer.gson.fromJson(json, targetType);
-					}
+		server = Javalin.create(config -> {
+			config.jsonMapper(new JsonMapper() {
+				@NotNull
+				@Override
+				public <T> T fromJsonString(@NotNull String json, @NotNull Type targetType) {
+					return AudioLinkServer.gson.fromJson(json, targetType);
+				}
 
-					@NotNull
-					@Override
-					public String toJsonString(@NotNull Object obj, @NotNull Type type) {
-						return AudioLinkServer.gson.toJson(obj, type);
-					}
-				})
-		);
+				@NotNull
+				@Override
+				public String toJsonString(@NotNull Object obj, @NotNull Type type) {
+					return AudioLinkServer.gson.toJson(obj, type);
+				}
+			});
+
+			config.plugins.enableCors(cors -> cors.add(CorsPluginConfig::anyHost));
+		});
 
 		server.before(ctx -> {
 			if(!Objects.equals(ctx.header("Authorization"), main.config.password)) {
