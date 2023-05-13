@@ -1,5 +1,8 @@
 package de.mineking.audiolink.server.processing;
 
+import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
+import com.sedmelluq.discord.lavaplayer.format.transcoder.AudioChunkEncoder;
+import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import de.mineking.audiolink.server.main.AudioLinkServer;
 import de.mineking.audiolink.server.processing.data.EventType;
@@ -16,6 +19,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class AudioConnection {
+	private final AudioChunkEncoder encoder = StandardAudioDataFormats.DISCORD_OPUS.createEncoder(new AudioConfiguration());
+
 	private final AudioLinkServer<?> main;
 	private final WsContext context;
 	private final AudioServer.ClientConfiguration config;
@@ -76,6 +81,10 @@ public class AudioConnection {
 		var frame1 = player1.provide();
 		var frame2 = player2.provide();
 
+		if(frame1 == null && frame2 == null) {
+			return;
+		}
+
 		var data1 = frame1 != null ? frame1.getData() : new byte[0];
 		var data2 = frame2 != null ? frame2.getData() : new byte[0];
 
@@ -85,10 +94,23 @@ public class AudioConnection {
 		ByteBuffer.wrap(data1).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm1);
 		ByteBuffer.wrap(data2).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm2);
 
-		var mixed = mixPcmData(pcm1, pcm2);
-		var buffer = ByteBuffer.allocate(mixed.length * 2);
+		if(frame2 == null) {
+			sendAudioData(pcm1);
+			return;
+		}
 
-		for(var s : mixed) {
+		if(frame1 == null) {
+			sendAudioData(pcm2);
+			return;
+		}
+
+		sendAudioData(mixPcmData(pcm1, pcm2));
+	}
+
+	private void sendAudioData(short[] data) {
+		var buffer = ByteBuffer.allocate(data.length * 2);
+
+		for(var s : data) {
 			buffer.putShort(s);
 		}
 
@@ -170,6 +192,8 @@ public class AudioConnection {
 		if(shutdown) {
 			return;
 		}
+
+		encoder.close();
 
 		shutdown = true;
 
