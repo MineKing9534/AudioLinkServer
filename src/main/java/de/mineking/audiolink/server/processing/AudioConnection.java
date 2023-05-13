@@ -176,7 +176,9 @@ public class AudioConnection {
 		context.closeSession();
 
 		AudioLinkServer.log.info("Client disconnect; Client Info: " + config.clientInfo());
+
 		player1.destroy();
+		player2.destroy();
 
 		if(stream != null) {
 			stream.cancel(true);
