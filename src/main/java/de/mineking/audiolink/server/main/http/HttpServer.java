@@ -2,6 +2,7 @@ package de.mineking.audiolink.server.main.http;
 
 import de.mineking.audiolink.server.main.AudioLinkServer;
 import de.mineking.audiolink.server.main.http.endpoints.ConnectionEndpoint;
+import de.mineking.audiolink.server.main.http.endpoints.SupportsCommandEndpoint;
 import de.mineking.audiolink.server.main.http.endpoints.TrackSearchEndpoint;
 import io.javalin.Javalin;
 import io.javalin.http.ForbiddenResponse;
@@ -42,6 +43,7 @@ public class HttpServer {
 
 		server.get("track", new TrackSearchEndpoint(main));
 		server.get("connection", new ConnectionEndpoint(main));
+		server.get("supports", new SupportsCommandEndpoint(main));
 
 		server.ws("gateway", main.audioServer);
 

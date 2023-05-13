@@ -37,4 +37,8 @@ public class CommandManager {
 			AudioLinkServer.log.error("Error performing command '" + data.get("command").getAsString() + "'", e);
 		}
 	}
+
+	public boolean hasCommand(String cmd) {
+		return commands.containsKey(cmd);
+	}
 }
