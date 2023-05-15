@@ -1,8 +1,5 @@
 package de.mineking.audiolink.server.processing;
 
-import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
-import com.sedmelluq.discord.lavaplayer.format.transcoder.AudioChunkEncoder;
-import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import de.mineking.audiolink.server.main.AudioLinkServer;
 import de.mineking.audiolink.server.processing.data.EventType;
@@ -13,14 +10,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class AudioConnection {
-	private final AudioChunkEncoder encoder = StandardAudioDataFormats.DISCORD_OPUS.createEncoder(new AudioConfiguration());
-
 	private final AudioLinkServer<?> main;
 	private final WsContext context;
 	private final AudioServer.ClientConfiguration config;
@@ -88,41 +82,29 @@ public class AudioConnection {
 		var data1 = frame1 != null ? frame1.getData() : new byte[0];
 		var data2 = frame2 != null ? frame2.getData() : new byte[0];
 
-		var pcm1 = new short[data1.length / 2];
-		var pcm2 = new short[data2.length / 2];
-
-		ByteBuffer.wrap(data1).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm1);
-		ByteBuffer.wrap(data2).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(pcm2);
-
 		if(frame2 == null) {
-			sendAudioData(pcm1);
+			sendAudioData(data1);
 			return;
 		}
 
 		if(frame1 == null) {
-			sendAudioData(pcm2);
+			sendAudioData(data2);
 			return;
 		}
 
-		sendAudioData(mixPcmData(pcm1, pcm2));
+		sendAudioData(mixPcmData(data1, data2));
 	}
 
-	private void sendAudioData(short[] data) {
-		var buffer = ByteBuffer.allocate(data.length * 2);
-
-		for(var s : data) {
-			buffer.putShort(s);
-		}
-
-		sendData(MessageType.AUDIO, out -> out.write(buffer.array()));
+	private void sendAudioData(byte[] data) {
+		sendData(MessageType.AUDIO, out -> out.write(data));
 	}
 
-	private static short[] mixPcmData(short[] pcm1, short[] pcm2) {
+	private static byte[] mixPcmData(byte[] pcm1, byte[] pcm2) {
 		int length = Math.min(pcm1.length, pcm2.length);
-		short[] mixedPcm = new short[length];
+		var mixedPcm = new byte[length];
 
 		for(int i = 0; i < length; i++) {
-			mixedPcm[i] = (short) ((pcm1[i] + pcm2[i]) / 2);
+			mixedPcm[i] = (byte) ((pcm1[i] + pcm2[i]) / 2);
 		}
 
 		if(pcm1.length > length) {
@@ -192,8 +174,6 @@ public class AudioConnection {
 		if(shutdown) {
 			return;
 		}
-
-		encoder.close();
 
 		shutdown = true;
 
