@@ -2,6 +2,7 @@ package de.mineking.audiolink.server.main.http;
 
 import de.mineking.audiolink.server.main.AudioLinkServer;
 import de.mineking.audiolink.server.main.http.endpoints.ConnectionEndpoint;
+import de.mineking.audiolink.server.main.http.endpoints.InfoEndpoint;
 import de.mineking.audiolink.server.main.http.endpoints.SupportsCommandEndpoint;
 import de.mineking.audiolink.server.main.http.endpoints.TrackSearchEndpoint;
 import io.javalin.Javalin;
@@ -38,7 +39,13 @@ public class HttpServer {
 			config.plugins.enableCors(cors -> cors.add(CorsPluginConfig::anyHost));
 		});
 
+		server.get("info", new InfoEndpoint());
+
 		server.before(ctx -> {
+			if(ctx.path().equals("/info")) {
+				return;
+			}
+
 			if(!Objects.equals(ctx.header("Authorization"), main.config.password)) {
 				throw new ForbiddenResponse();
 			}
