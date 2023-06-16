@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.github.Walkyst</groupId>
             <artifactId>lavaplayer-fork</artifactId>
-            <version>ef075855da</version>
+            <version>17c75f5</version>
         </dependency>
 
         <dependency>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>5.4.2</version>
+            <version>5.6.0</version>
         </dependency>
 
         <dependency>
@@ -101,6 +101,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20230227</version>
         </dependency>
     </dependencies>
 </project>
