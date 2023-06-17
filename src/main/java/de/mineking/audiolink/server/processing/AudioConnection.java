@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -72,52 +71,23 @@ public class AudioConnection {
 	 * Gets the audio data of both layers and combine them. The data are sent to the client afterward.
 	 */
 	private void sendAudioData() {
-		var frame1 = player1.provide();
 		var frame2 = player2.provide();
 
-		if(frame1 == null && frame2 == null) {
-			return;
+		if(frame2 != null) {
+			sendAudioData(frame2.getData());
 		}
 
-		var data1 = frame1 != null ? frame1.getData() : new byte[0];
-		var data2 = frame2 != null ? frame2.getData() : new byte[0];
+		else {
+			var frame1 = player1.provide();
 
-		if(frame2 == null) {
-			sendAudioData(data1);
-			return;
+			if(frame1 != null) {
+				sendAudioData(frame1.getData());
+			}
 		}
-
-		if(frame1 == null) {
-			sendAudioData(data2);
-			return;
-		}
-
-		sendAudioData(mixPcmData(data1, data2));
 	}
 
 	private void sendAudioData(byte[] data) {
 		sendData(MessageType.AUDIO, out -> out.write(data));
-	}
-
-	private static byte[] mixPcmData(byte[] pcm1, byte[] pcm2) {
-		int length = Math.min(pcm1.length, pcm2.length);
-		var mixedPcm = new byte[length];
-
-		for(int i = 0; i < length; i++) {
-			mixedPcm[i] = (byte) ((pcm1[i] + pcm2[i]) / 2);
-		}
-
-		if(pcm1.length > length) {
-			mixedPcm = Arrays.copyOf(mixedPcm, pcm1.length);
-			System.arraycopy(pcm1, length, mixedPcm, length, pcm1.length - length);
-		}
-
-		else if(pcm2.length > length) {
-			mixedPcm = Arrays.copyOf(mixedPcm, pcm2.length);
-			System.arraycopy(pcm2, length, mixedPcm, length, pcm2.length - length);
-		}
-
-		return mixedPcm;
 	}
 
 	/**
