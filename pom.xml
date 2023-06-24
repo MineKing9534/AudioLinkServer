@@ -9,8 +9,6 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <build>
-        <finalName>../AudioServer</finalName>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
