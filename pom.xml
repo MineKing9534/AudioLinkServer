@@ -49,7 +49,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.Walkyst</groupId>
+            <groupId>com.github.MineKing9534</groupId>
             <artifactId>lavaplayer-fork</artifactId>
             <version>17c75f5</version>
         </dependency>
